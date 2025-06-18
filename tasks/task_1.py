@@ -10,6 +10,7 @@
 
 # STDLIB
 import multiprocessing
+import os
 
 # THIRDPARTY
 from line_profiler import LineProfiler
@@ -45,6 +46,8 @@ def main() -> None:
     lp.run("find_simple_sync()")
     lp.print_stats()
 
+    print("Количество ядер: " + str(os.cpu_count()))
+
     lp = LineProfiler(find_simple_mp)
     lp.run("find_simple_mp()")
     lp.print_stats()
@@ -68,6 +71,7 @@ if __name__ == "__main__":
 #     19                                                   raise ValueE...
 #     20    999999        2e+12    2e+06    100.0      return [i for i ...
 #
+# Количество ядер: 12
 # 1000000it [00:01, 890107.30it/s]
 # Timer unit: 1e-09 s
 #
