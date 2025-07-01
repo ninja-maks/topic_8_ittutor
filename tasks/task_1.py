@@ -14,31 +14,26 @@ import os
 
 # THIRDPARTY
 from line_profiler import LineProfiler
-from tqdm import tqdm
 
 
 def find_simple_sync(num: int = 1000000) -> list[int]:
-    if num < 100000 or num >= 20000000:
-        raise ValueError("Incorrect value")
-    return [i for i in tqdm(range(2, num)) if check_simple(i)]
+    return [i for i in range(2, num) if check_simple(i)]
 
 
 def check_simple(num: int) -> bool:
     last_possible = num // 2
-    for i in range(2, last_possible):
+    for i in range(2, last_possible + 1):
         if num % i == 0:
             return False
     return True
 
 
 def find_simple_mp(num: int = 1000000) -> list[int]:
-    if num < 100000 or num >= 20000000:
-        raise ValueError("Incorrect value")
-    numbers = [i for i in range(num)]
+    numbers = [i for i in range(2, num)]
     results = 0
     with multiprocessing.Pool() as pool:
         results = pool.map(check_simple, numbers)
-    return [num for num, is_simple in tqdm(zip(numbers, results)) if is_simple]
+    return [num for num, is_simple in zip(numbers, results) if is_simple]
 
 
 def main() -> None:
