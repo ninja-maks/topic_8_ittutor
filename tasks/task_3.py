@@ -5,40 +5,42 @@
 
 # STDLIB
 import asyncio
+import typing as types
 
 # THIRDPARTY
 import aiohttp
+from async_limiter import DualRateLimiter
 
 
-MAX_REQUESTS = 10
-semaphore = asyncio.Semaphore(MAX_REQUESTS)
+class Requester:
+
+    def __init__(
+        self: types.Self, base_url: str = "https://google.com"
+    ) -> None:
+        self.url = base_url
+        self.limiter = DualRateLimiter(
+            max_concurrent=10, max_requests=10, time_period=1, name=base_url
+        )
+
+    async def fetch(
+        self: types.Self, session: aiohttp.ClientSession, i: int
+    ) -> str:
+        async with self.limiter:
+            async with session.get(self.url) as response:
+                return f"{i} - {response}"
 
 
-async def task_semaphor() -> None:
-    while True:
-        await asyncio.sleep(1)
-        for _ in range(MAX_REQUESTS - semaphore._value):
-            semaphore.release()
-
-
-async def fetch(session: aiohttp.ClientSession, i: int) -> None:
-    async with semaphore:
-        async with session.get("http://google.com") as response:
-            # await asyncio.sleep(5)
-            print(f"{i} - {response}")
-
-
-async def main() -> None:
+async def main() -> list:
     async with aiohttp.ClientSession() as session:
-        asyncio.create_task(task_semaphor())
+        obj = Requester()
         tasks = []
         for i in range(30):
-            task = asyncio.create_task(fetch(session, i))
+            task = asyncio.create_task(obj.fetch(session, i))
             tasks.append(task)
-        await asyncio.gather(*tasks)
+        return await asyncio.gather(*tasks)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    print(asyncio.run(main()))
     # list_i = [1,2,3,4]
     # print(list_i)
