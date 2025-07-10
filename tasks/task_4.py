@@ -14,36 +14,39 @@
 
 # STDLIB
 import asyncio
+import typing as types
 
 # THIRDPARTY
 import aiohttp
+from async_limiter import DualRateLimiter
 
 
-MAX_REQUESTS = 10
-semaphore = asyncio.Semaphore(MAX_REQUESTS)
+class CacherFileMaker:
 
+    def __init__(self: types.Self) -> None:
+        self.limiter = DualRateLimiter(
+            max_concurrent=10,
+            max_requests=10,
+            time_period=1,
+            name="some_class",
+        )
 
-async def func_semaphore() -> None:
-    while True:
-        await asyncio.sleep(1)
-        for _ in range(MAX_REQUESTS - semaphore._value):
-            semaphore.release()
-
-
-async def fetch(session: aiohttp.ClientSession, i: int) -> None:
-    async with semaphore:
-        async with session.get("https://example.com") as response:
-            with open(f"test_{i}.txt", "a+") as file:
-                file.write(str(response.status))
+    async def fetch(
+        self: types.Self, session: aiohttp.ClientSession, i: int
+    ) -> None:
+        async with self.limiter:
+            async with session.get("https://example.com") as response:
+                print(1)
+                with open(f"test_{i}.txt", "a+") as file:
+                    file.write(str(response.status))
 
 
 async def main() -> None:
     async with aiohttp.ClientSession() as session:
-        asyncio.create_task(func_semaphore())
-
+        obj = CacherFileMaker()
         tasks = []
         for i in range(50):
-            task = asyncio.create_task(fetch(session, i))
+            task = asyncio.create_task(obj.fetch(session, i))
             tasks.append(task)
         await asyncio.gather(*tasks)
 
