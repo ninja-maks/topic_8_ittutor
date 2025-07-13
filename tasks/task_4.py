@@ -36,7 +36,6 @@ class CacherFileMaker:
     ) -> None:
         async with self.limiter:
             async with session.get("https://example.com") as response:
-                print(1)
                 with open(f"test_{i}.txt", "a+") as file:
                     file.write(str(response.status))
 
